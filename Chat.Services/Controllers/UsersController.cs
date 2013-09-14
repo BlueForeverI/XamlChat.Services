@@ -60,6 +60,10 @@ namespace Chat.Services.Controllers
         {
 
             var user = usersRepository.GetBySessionKey(sessionKey);
+            if (value.QueryText.Length < 3)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Please enter at least 3 symbols for search text ");
+            }
             if(user != null)
             {
                 var users = usersRepository.All()
@@ -74,7 +78,19 @@ namespace Chat.Services.Controllers
                                          ProfilePictureUrl = u.ProfilePictureUrl
                                      }).ToList();
 
-                return Request.CreateResponse(HttpStatusCode.OK, users);
+                var returnUsers = new List<UserModel>();
+                foreach (var us in users)
+                {
+                    var name = us.Username.ToLower();
+                    var searchText = value.QueryText.ToLower().Substring(0, value.QueryText.Length - (value.QueryText.Length - 3));
+                    bool checkUserForMatch = name.StartsWith(searchText);
+                    if (checkUserForMatch)
+                    {
+                        returnUsers.Add(us);
+                    }
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, returnUsers);
             }
 
             return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid session key");
